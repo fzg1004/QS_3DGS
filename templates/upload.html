@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传视频 - 3D高斯溅射系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+        
+        .navbar {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo h1 {
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-info span {
+            color: #666;
+        }
+        
+        .btn-logout {
+            padding: 8px 16px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn-logout:hover {
+            background: #c0392b;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .upload-section {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 10px;
+            padding: 60px 20px;
+            text-align: center;
+            transition: border-color 0.3s;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            border-color: #667eea;
+        }
+        
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .upload-text p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .btn-upload {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-upload:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-upload:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .selected-file {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .selected-file.show {
+            display: block;
+        }
+        
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .progress-section {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .progress-section.show {
+            display: block;
+        }
+        
+        .progress-title {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+        
+        .progress-message {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .status-log {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+        
+        .status-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        
+        .btn-viewer {
+            padding: 12px 30px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .btn-viewer.show {
+            display: inline-block;
+        }
+        
+        .tasks-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tasks-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .tasks-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .task-item {
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .task-status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-uploading { background: #f39c12; color: white; }
+        .status-processing { background: #3498db; color: white; }
+        .status-training { background: #9b59b6; color: white; }
+        .status-completed { background: #27ae60; color: white; }
+        .status-failed { background: #e74c3c; color: white; }
+        
+        .instructions {
+            background: #fff8e1;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">
+            <h1>3D高斯溅射系统</h1>
+        </div>
+        <div class="user-info">
+            <span>欢迎, {{ username }}</span>
+            <button class="btn-logout" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="upload-section">
+            <h2>上传视频文件</h2>
+            <p>上传一个视频文件，系统将自动进行3D重建</p>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📹</div>
+                <div class="upload-text">
+                    <h3>点击或拖拽上传视频</h3>
+                    <p>支持 MP4, AVI, MOV, MKV 格式，最大500MB</p>
+                    <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+                        选择文件
+                    </button>
+                </div>
+            </div>
+            
+            <input type="file" id="fileInput" class="file-input" accept=".mp4,.avi,.mov,.mkv" onchange="handleFileSelect(event)">
+            
+            <div class="selected-file" id="selectedFile">
+                <div class="file-info">
+                    <div>
+                        <strong>已选择文件:</strong>
+                        <span id="fileName"></span>
+                        (<span id="fileSize"></span>)
+                    </div>
+                    <button onclick="clearFile()" style="color: #e74c3c; background: none; border: none; cursor: pointer;">
+                        移除
+                    </button>
+                </div>
+            </div>
+            
+            <div class="progress-section" id="progressSection">
+                <div class="progress-title">
+                    <span>处理进度</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-message" id="progressMessage">等待开始...</div>
+                
+                <div class="status-log" id="statusLog"></div>
+                
+                <button class="btn-viewer" id="btnViewer" onclick="openViewer()">
+                    查看3D模型
+                </button>
+            </div>
+            
+            <button class="btn-upload" id="btnStartProcess" onclick="startProcessing()" disabled>
+                开始处理
+            </button>
+        </div>
+        
+        <div class="tasks-section">
+            <h2>我的任务</h2>
+            <div class="tasks-list" id="tasksList">
+                <div style="text-align: center; padding: 20px; color: #666;">
+                    暂无任务
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>使用说明：</h3>
+            <ul>
+                <li>上传包含物体多角度视角的视频文件</li>
+                <li>视频时长建议在10-60秒之间</li>
+                <li>尽量保持相机平稳移动，避免剧烈晃动</li>
+                <li>确保拍摄对象在视频中清晰可见</li>
+                <li>处理时间取决于视频长度和复杂度，通常需要5-30分钟</li>
+                <li>完成后可以查看生成的3D高斯溅射模型</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        let selectedFile = null;
+        let currentTaskId = null;
+        let statusInterval = null;
+        let plyFilePath = null;
+        
+        // 拖拽上传功能
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const btnUpload = document.querySelector('.btn-upload');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length) {
+                handleFiles(e.dataTransfer.files);
+            }
+        });
+        
+        uploadArea.addEventListener('click', () => {
+           // 如果点击的是"选择文件"按钮，不触发文件选择
+            if (e.target !== btnUpload && !btnUpload.contains(e.target)) {
+                fileInput.click();
+            }
+        });
+        
+        function handleFiles(files) {
+            const file = files[0];
+            if (!file) return;
+            
+            // 检查文件类型
+            const allowedTypes = ['video/mp4', 'video/avi', 'video/quicktime', 'video/x-matroska'];
+            if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp4|avi|mov|mkv)$/i)) {
+                alert('请选择视频文件（MP4, AVI, MOV, MKV格式）');
+                return;
+            }
+            
+            // 检查文件大小（500MB限制）
+            if (file.size > 500 * 1024 * 1024) {
+                alert('文件太大，请选择小于500MB的文件');
+                return;
+            }
+            
+            selectedFile = file;
+            updateFileInfo();
+        }
+        
+        function handleFileSelect(event) {
+            handleFiles(event.target.files);
+        }
+        
+        function updateFileInfo() {
+            if (!selectedFile) return;
+            
+            document.getElementById('fileName').textContent = selectedFile.name;
+            document.getElementById('fileSize').textContent = formatFileSize(selectedFile.size);
+            document.getElementById('selectedFile').classList.add('show');
+            document.getElementById('btnStartProcess').disabled = false;
+        }
+        
+        function clearFile() {
+            selectedFile = null;
+            fileInput.value = '';
+            document.getElementById('selectedFile').classList.remove('show');
+            document.getElementById('btnStartProcess').disabled = true;
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        async function startProcessing() {
+            if (!selectedFile) {
+                alert('请先选择文件');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            try {
+                document.getElementById('btnStartProcess').disabled = true;
+                document.getElementById('progressSection').classList.add('show');
+                
+                const response = await fetch('/upload/video', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentTaskId = data.task_id;
+                    startStatusPolling();
+                } else {
+                    alert('上传失败: ' + data.message);
+                    document.getElementById('btnStartProcess').disabled = false;
+                }
+                
+            } catch (error) {
+                console.error('上传错误:', error);
+                alert('上传失败，请检查网络连接');
+                document.getElementById('btnStartProcess').disabled = false;
+            }
+        }
+        
+        function startStatusPolling() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+            
+            statusInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/task/status/${currentTaskId}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        updateProgress(data.task);
+                    } else {
+                        console.error('获取状态失败:', data.message);
+                    }
+                } catch (error) {
+                    console.error('轮询错误:', error);
+                }
+            }, 2000); // 每2秒轮询一次
+        }
+        
+        function updateProgress(task) {
+            const progressPercent = task.progress || 0;
+            const status = task.status;
+            const message = task.message || '';
+            
+            document.getElementById('progressPercent').textContent = progressPercent + '%';
+            document.getElementById('progressFill').style.width = progressPercent + '%';
+            document.getElementById('progressMessage').textContent = message;
+            
+            // 添加状态日志
+            addStatusLog(message);
+            
+            // 更新状态颜色
+            updateStatusColor(status);
+            
+            // 检查是否完成
+            if (status === 'completed') {
+                clearInterval(statusInterval);
+                document.getElementById('btnStartProcess').disabled = true;
+                
+                if (task.result && task.result.ply_path) {
+                    plyFilePath = task.result.ply_path;
+                    document.getElementById('btnViewer').classList.add('show');
+                }
+                
+                // 刷新任务列表
+                loadTasks();
+            } else if (status === 'failed') {
+                clearInterval(statusInterval);
+                document.getElementById('btnStartProcess').disabled = false;
+                alert('处理失败: ' + message);
+            }
+        }
+        
+        function updateStatusColor(status) {
+            const progressFill = document.getElementById('progressFill');
+            progressFill.className = 'progress-fill';
+            
+            switch (status) {
+                case 'uploading':
+                    progressFill.style.background = '#f39c12';
+                    break;
+                case 'processing':
+                    progressFill.style.background = '#3498db';
+                    break;
+                case 'training':
+                    progressFill.style.background = '#9b59b6';
+                    break;
+                case 'completed':
+                    progressFill.style.background = '#27ae60';
+                    break;
+                case 'failed':
+                    progressFill.style.background = '#e74c3c';
+                    break;
+            }
+        }
+        
+        function addStatusLog(message) {
+            const statusLog = document.getElementById('statusLog');
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            
+            const logItem = document.createElement('div');
+            logItem.className = 'status-item';
+            logItem.innerHTML = `<strong>[${timeStr}]</strong> ${message}`;
+            
+            statusLog.prepend(logItem);
+            
+            // 限制日志数量
+            while (statusLog.children.length > 10) {
+                statusLog.removeChild(statusLog.lastChild);
+            }
+        }
+        
+        function openViewer() {
+            if (plyFilePath) {
+                // 提取用户名和文件名
+                const pathParts = plyFilePath.split('/');
+                const usernameIndex = pathParts.indexOf('data') + 1;
+                const filenameIndex = usernameIndex + 1;
+                
+                if (usernameIndex > 0 && filenameIndex < pathParts.length) {
+                    const username = pathParts[usernameIndex];
+                    const filename = pathParts[filenameIndex];
+                    window.open(`/viewer/${username}/${filename}`, '_blank');
+                }
+            }
+        }
+        
+        async function loadTasks() {
+            try {
+                const response = await fetch('/tasks');
+                const data = await response.json();
+                
+                if (data.success && data.count > 0) {
+                    updateTasksList(data.tasks);
+                }
+            } catch (error) {
+                console.error('加载任务列表失败:', error);
+            }
+        }
+        
+        function updateTasksList(tasks) {
+            const tasksList = document.getElementById('tasksList');
+            tasksList.innerHTML = '';
+            
+            Object.entries(tasks).forEach(([taskId, task]) => {
+                const taskItem = document.createElement('div');
+                taskItem.className = 'task-item';
+                
+                const time = new Date(task.created_at * 1000).toLocaleString();
+                const statusText = getStatusText(task.status);
+                
+                taskItem.innerHTML = `
+                    <div>
+                        <div><strong>任务ID:</strong> ${taskId.substring(taskId.indexOf('_') + 1)}</div>
+                        <div><small>创建时间: ${time}</small></div>
+                    </div>
+                    <div class="task-status status-${task.status}">
+                        ${statusText}
+                    </div>
+                `;
+                
+                tasksList.appendChild(taskItem);
+            });
+        }
+        
+        function getStatusText(status) {
+            const statusMap = {
+                'uploading': '上传中',
+                'uploaded': '已上传',
+                'processing': '处理中',
+                'training': '训练中',
+                'completed': '已完成',
+                'failed': '失败'
+            };
+            return statusMap[status] || status;
+        }
+        
+        function logout() {
+            window.location.href = '/logout';
+        }
+        
+        // 页面加载时获取任务列表
+        window.addEventListener('DOMContentLoaded', () => {
+            loadTasks();
+        });
+    </script>
+</body>
+</html>

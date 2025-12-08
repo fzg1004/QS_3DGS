@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D模型查看器 - 3D高斯溅射系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo h1 {
+            font-size: 20px;
+            color: #333;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-info span {
+            color: #666;
+        }
+        
+        .btn-back {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .btn-back:hover {
+            background: #2980b9;
+        }
+        
+        .viewer-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .viewer-frame {
+            flex: 1;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+        
+        .viewer-placeholder {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        
+        .placeholder-icon {
+            font-size: 72px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .placeholder-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .placeholder-message {
+            color: #666;
+            text-align: center;
+            max-width: 500px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .btn-refresh {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .demo-viewer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            border-radius: 10px;
+            color: white;
+            padding: 40px;
+        }
+        
+        .demo-canvas {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, #2c3e50 0%, #1a1a1a 100%);
+            border-radius: 10px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .demo-point {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            transform-origin: center;
+            animation: float 3s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.2); }
+        }
+        
+        .demo-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .demo-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .info-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        
+        .info-panel h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .info-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .info-value {
+            color: #333;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">
+            <h1>3D模型查看器</h1>
+        </div>
+        <div class="user-info">
+            <span>用户: {{ username }} | 模型: {{ filename }}</span>
+            <button class="btn-back" onclick="goBack()">返回上传</button>
+        </div>
+    </div>
+    
+    <div class="viewer-container">
+        {% if viewer_url and ply_exists %}
+        <iframe src="{{ viewer_url }}" class="viewer-frame" id="viewerFrame"></iframe>
+        
+        <div class="info-panel">
+            <h3>模型信息</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">用户名</div>
+                    <div class="info-value">{{ username }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">模型名称</div>
+                    <div class="info-value">{{ filename }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">查看器状态</div>
+                    <div class="info-value">运行中</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">查看器地址</div>
+                    <div class="info-value">{{ viewer_url }}</div>
+                </div>
+            </div>
+            <div style="margin-top: 15px; color: #666; font-size: 14px;">
+                提示：如果查看器没有正常显示，请尝试刷新页面或点击下方按钮重新启动。
+            </div>
+        </div>
+        
+        {% elif not ply_exists %}
+        <div class="viewer-placeholder">
+            <div class="placeholder-icon">❌</div>
+            <div class="placeholder-title">模型文件不存在</div>
+            <div class="placeholder-message">
+                找不到PLY模型文件。可能是模型还未训练完成，或者文件已被删除。
+                请返回上传页面重新处理视频。
+            </div>
+            <button class="btn-back" onclick="goBack()">返回上传页面</button>
+        </div>
+        
+        {% else %}
+        <div class="viewer-placeholder" id="viewerPlaceholder">
+            <div class="placeholder-icon">⚙️</div>
+            <div class="placeholder-title">正在启动3D查看器...</div>
+            <div class="placeholder-message" id="loadingMessage">
+                正在连接3D高斯溅射查看器，请稍候...
+            </div>
+            <div class="loading"></div>
+            <button class="btn-refresh" onclick="startViewer()" style="margin-top: 20px;">
+                启动查看器
+            </button>
+        </div>
+        
+        <div id="demoViewer" class="demo-viewer" style="display: none;">
+            <h2>3D高斯溅射模型预览（演示模式）</h2>
+            <p>这是一个3D模型的预览演示。在实际系统中，这里会显示真实的高斯溅射模型。</p>
+            
+            <div class="demo-canvas" id="demoCanvas">
+                <!-- 演示用点云 -->
+            </div>
+            
+            <div class="demo-controls">
+                <button class="demo-btn" onclick="rotateModel('left')">← 旋转</button>
+                <button class="demo-btn" onclick="rotateModel('right')">旋转 →</button>
+                <button class="demo-btn" onclick="zoomModel('in')">放大</button>
+                <button class="demo-btn" onclick="zoomModel('out')">缩小</button>
+                <button class="demo-btn" onclick="resetView()">重置</button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        // 从服务器传递的变量
+        const hasViewerUrl = Boolean("{{ viewer_url|default('') }}");
+        const hasPlyFile = Boolean("{{ ply_exists|default(false) }}");
+        const userName = "{{ username }}";
+        const fileName = "{{ filename }}";
+        const serverHost = window.location.hostname;
+        
+        function goBack() {
+            window.location.href = '/upload';
+        }
+        
+        async function startViewer() {
+            const placeholder = document.getElementById('viewerPlaceholder');
+            const loadingMessage = document.getElementById('loadingMessage');
+            
+            loadingMessage.innerHTML = '<div class="loading"></div> 正在启动3D查看器服务...';
+            
+            try {
+                // 启动查看器
+                const response = await fetch('/api/viewer/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ply_path: userName + '/' + fileName + '/output/point_cloud.ply'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadingMessage.textContent = '查看器启动成功！正在加载...';
+                    
+                    // 延迟后重定向到查看器
+                    setTimeout(() => {
+                        if (data.viewer_url) {
+                            window.location.href = '/viewer/' + userName + '/' + fileName;
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 2000);
+                    
+                } else {
+                    loadingMessage.textContent = '启动失败: ' + data.message;
+                    showDemoViewer();
+                }
+                
+            } catch (error) {
+                console.error('启动查看器失败:', error);
+                loadingMessage.textContent = '启动失败，正在切换到演示模式...';
+                showDemoViewer();
+            }
+        }
+        
+        function showDemoViewer() {
+            const placeholder = document.getElementById('viewerPlaceholder');
+            const demoViewer = document.getElementById('demoViewer');
+            
+            if (placeholder) placeholder.style.display = 'none';
+            if (demoViewer) {
+                demoViewer.style.display = 'flex';
+                createDemoPoints();
+            }
+        }
+        
+        function createDemoPoints() {
+            const canvas = document.getElementById('demoCanvas');
+            if (!canvas) return;
+            
+            const pointsCount = 200;
+            
+            for (let i = 0; i < pointsCount; i++) {
+                const point = document.createElement('div');
+                point.className = 'demo-point';
+                
+                // 随机位置
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                
+                // 随机大小和颜色
+                const size = 2 + Math.random() * 4;
+                const color = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.8)`;
+                
+                point.style.left = x + '%';
+                point.style.top = y + '%';
+                point.style.width = size + 'px';
+                point.style.height = size + 'px';
+                point.style.background = color;
+                
+                // 随机动画延迟
+                point.style.animationDelay = (Math.random() * 3) + 's';
+                
+                canvas.appendChild(point);
+            }
+        }
+        
+        // 演示控制函数
+        let rotation = 0;
+        let scale = 1;
+        
+        function rotateModel(direction) {
+            const canvas = document.getElementById('demoCanvas');
+            if (!canvas) return;
+            
+            rotation += direction === 'left' ? -15 : 15;
+            canvas.style.transform = `rotate(${rotation}deg) scale(${scale})`;
+        }
+        
+        function zoomModel(type) {
+            const canvas = document.getElementById('demoCanvas');
+            if (!canvas) return;
+            
+            scale = type === 'in' ? scale * 1.2 : scale / 1.2;
+            canvas.style.transform = `rotate(${rotation}deg) scale(${scale})`;
+        }
+        
+        function resetView() {
+            const canvas = document.getElementById('demoCanvas');
+            if (!canvas) return;
+            
+            rotation = 0;
+            scale = 1;
+            canvas.style.transform = 'rotate(0deg) scale(1)';
+        }
+        
+        // 页面加载时自动尝试启动查看器
+        window.addEventListener('DOMContentLoaded', () => {
+            // 如果没有查看器URL但PLY文件存在，尝试启动查看器
+            if (!hasViewerUrl && hasPlyFile) {
+                console.log('自动启动查看器...');
+                setTimeout(startViewer, 1000);
+            }
+            
+            // 如果既没有查看器URL也没有PLY文件，显示演示
+            if (!hasViewerUrl && !hasPlyFile) {
+                console.log('显示演示查看器...');
+                showDemoViewer();
+            }
+        });
+        
+        // 监听查看器iframe加载状态
+        const viewerFrame = document.getElementById('viewerFrame');
+        if (viewerFrame) {
+            viewerFrame.onload = function() {
+                console.log('查看器加载完成');
+            };
+            
+            viewerFrame.onerror = function() {
+                console.error('查看器加载失败');
+                // 可以在这里添加错误处理，比如显示备选方案
+            };
+        }
+    </script>
+</body>
+</html>

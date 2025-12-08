@@ -1,0 +1,11 @@
+Flask==2.3.3
+Flask-CORS==4.0.0
+Werkzeug==2.3.7
+pillow==10.0.0
+numpy==1.24.3
+opencv-python-headless==4.8.1.78
+imageio==2.31.3
+tqdm==4.66.1
+pycolmap==0.5.0
+colmap-script==0.1.0
+colmap-algorithm==1.0.0
