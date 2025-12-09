@@ -68,7 +68,22 @@ class ColmapGenerator:
         # 2.1 特征提取（适配3.13.0版本）
         database_path = colmap_dir / "database.db"
         
-        pycolmap.extract_features(str(database_path),str(frames_dir))
+        reader_opts = pycolmap.ImageReaderOptions()
+       
+        # 1.2 SIFT特征配置（3.13拆分的独立参数）
+        extraction_opts = pycolmap.FeatureExtractionOptions()
+        extraction_opts.max_image_size = self.max_image_size
+        extraction_opts.sift.num_octaves = self.sift_num_octaves  # 8
+
+    # 1.3 执行特征提取（3.13 精准参数，无报错）
+        pycolmap.extract_features(
+            database_path=str(database_path),
+            image_path=str(frames_dir),
+            camera_mode=pycolmap.CameraMode.SINGLE,  # 枚举值（必对！）
+            camera_model=self.camera_model,          # "PINHOLE"（字符串）
+            reader_options=reader_opts,
+            extraction_options=extraction_opts
+        )
         logger.info("特征提取完成")
        
          # ========== 2.2 特征匹配（3.13.0 直接传参） ==========
