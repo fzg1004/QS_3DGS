@@ -70,7 +70,7 @@ class ColmapGenerator:
         
         reader_opts = pycolmap.ImageReaderOptions()
        
-        # 1.2 SIFT特征配置（3.13拆分的独立参数）
+        # 1.2 （3.13拆分的独立参数）
         extraction_opts = pycolmap.FeatureExtractionOptions()
         extraction_opts.max_image_size = self.max_image_size
         extraction_opts.sift.num_octaves = self.sift_num_octaves  # 8
@@ -102,6 +102,7 @@ class ColmapGenerator:
         
         sparse_dir.mkdir(exist_ok=True, parents=True)
         reconstruction.write_binary(str(sparse_dir))
+        #reconstruction.write(str(sparse_dir))
         
         logger.info(f"稀疏重建完成：相机数={len(reconstruction.cameras)}, 图像数={len(reconstruction.images)}, 点云数={len(reconstruction.points3D)}")
 

@@ -20,14 +20,67 @@ class Config:
     ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv'}
     UPLOAD_CHUNK_SIZE = 8192
     
-    # 路径配置
-    GS_REPO_PATH = BASE_DIR / "gaussian-splatting"
-    GS_TRAIN_SCRIPT = GS_REPO_PATH / "train.py" if GS_REPO_PATH.exists() else None
-    WEB_3DGS_REPO_PATH = BASE_DIR / "web-3dgs"
-    WEB_3DGS_SCRIPT = WEB_3DGS_REPO_PATH / "main.py" if WEB_3DGS_REPO_PATH.exists() else None
     
-    # 训练配置
-    TRAINING_ITERATIONS = 30000  # 演示时可以用较少的迭代次数
+    # ==================== Conda 环境基础配置 ====================
+    # Conda根路径（可通过 `conda info --base` 命令获取）
+    CONDA_BASE = Path("/usr/local/anaconda3")  # 替换为你的conda根目录
+    # 方式2：自动获取（更通用，推荐）
+    # CONDA_BASE = Path(os.popen("conda info --base").read().strip())
+   
+    # ==================== 高斯泼溅项目配置 ====================
+    # 高斯泼溅项目仓库路径
+    GAUSSIAN_REPO_PATH = Path("/home/fzg25/projects/gaussian-splatting")
+    #虚拟环境名
+    GAUSSIAN_ENV = "gaussian-splatting"
+    #环境变量
+    GAUSSIAN_EXPORTS = {
+        "CUDA_HOME" : "$CONDA_PREFIX",
+        "PATH" : "$CUDA_HOME/bin:$PATH",
+        "TORCH_CUDA_ARCH_LIST" :"7.0",
+        "CC": "$CONDA_PREFIX/bin/gcc",
+        "CXX" : "$CONDA_PREFIX/bin/g++",
+        "LD_LIBRARY_PATH" : (
+            "$CONDA_PREFIX/lib/python3.8/site-packages/torch/lib:"
+            "/usr/lib/x86_64-linux-gnu:"	
+            "$CUDA_HOME/lib:"
+            "$CUDA_HOME/lib64"       
+        )
+    }
+    
+    GAUSSIAN_TRAIN_SCRIPT = GAUSSIAN_REPO_PATH / "train.py" if GAUSSIAN_REPO_PATH.exists() else None
+     # 训练参数配置
+    GAUSSIAN_TRAINING_ARGS = {
+        "iterations": 30000,  # 训练迭代数
+    }
+
+    
+    # ==================== web-dgs项目配置 ====================
+    # web-3dgs项目仓库路径
+    WEB_3DGS_REPO_PATH = Path("/home/fzg25/projects/web-3dgs")
+    #虚拟环境名
+    WEB_3DGS_ENV = "web_gs"
+    #环境变量
+    WEB_3DGS_EXPORTS = {
+        "CUDA_HOME" : "/usr/local/cuda-11.8",
+        "PATH" : "$CONDA_PREFIX/bin:$PATH",
+        "TORCH_CUDA_ARCH_LIST" :"7.0",
+        "CC": "/usr/bin/gcc",
+        "CXX" : "/usr/bin/g++",
+        "LD_LIBRARY_PATH" : (
+            "$CUDA_HOME/lib64:"
+            "$CONDA_PREFIX/lib/python3.10/site-packages/torch/lib:"
+            "/usr/lib/x86_64-gnu:"
+            "$CONDA_PREFIX/lib:"
+            "$CONDA_PREFIX/lib64"
+            
+        ),
+        "TORCH_CXX11_ABI" : "0",
+        "CFLAGS" : "-D_GLIBCXX_USE_CXX11_ABI=0 $CFLAGS",	
+        "CXXFLAGS" : "-D_GLIBCXX_USE_CXX11_ABI=0 $CXXFLAGS"
+    }
+    WEB_3DGS_TRAIN_SCRIPT = WEB_3DGS_REPO_PATH / "main.py" if WEB_3DGS_REPO_PATH.exists() else None
+
+   
     
     # 用户会话配置
     SECRET_KEY = "your-secret-key-change-this"

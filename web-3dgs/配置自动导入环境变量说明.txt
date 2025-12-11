@@ -1,0 +1,37 @@
+#编写自动配置环境变量的脚本
+GS_PATH=$(conda env list | grep gaussian-splatting | awk '{print $2}')
+#查看输入：conda env list | grep gaussian-splatting 
+#输出示例（你的路径应该是）：/home/fzg25/.conda/envs/web_3dgs
+  
+mkdir -p $GS/etc/conda/activate.d
+
+#然后将activate_web_gs_env_vars.sh放如该文件夹,
+并修改文件名为env_vars.sh：
+mv activate_web_gs_env_vars.sh env_vars.sh
+
+
+
+#配置退出环境时清理环境变量
+# 创建deactivate.d目录
+mkdir -p $GS_PATH/etc/conda/deactivate.d
+
+#然后将deactivate_web_gs_env_vars.sh放如该文件夹,
+并修改文件名为env_vars.sh：
+mv deactivate_web_gs_env_vars.sh env_vars.sh
+
+
+chmod +x $GS_PATH/etc/conda/activate.d/env_vars.sh
+chmod +x $GS_PATH/etc/conda/deactivate.d/env_vars.sh
+
+
+
+
+#验证是否生效
+conda deactivate
+conda activate web_gs
+
+# 检查环境变量
+echo $CUDA_HOME  # 应输出 /usr/local/cuda-11.8
+echo $TORCH_CXX11_ABI  # 应输出 0
+
+

@@ -185,7 +185,7 @@ def process_colmap_and_train(username, video_info, task_id):
         
         update_task_status(task_id, TaskStatus.TRAINING, f"生成COLMAP数据成功，开始训练高斯溅射模型...", 50)
         
-        '''
+        
         # 步骤2: 训练模型
         from models.trainer import ModelTrainer
         trainer = ModelTrainer()
@@ -205,7 +205,7 @@ def process_colmap_and_train(username, video_info, task_id):
                           })
         
         logger.info(f"任务 {task_id} 完成: {training_result['ply_path']}")
-        '''
+        
     except Exception as e:
         logger.error(f"处理任务 {task_id} 出错: {str(e)}")
         update_task_status(task_id, TaskStatus.FAILED, f"处理失败: {str(e)}", 0)
